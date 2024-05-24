@@ -6,20 +6,22 @@ import (
 	"flag"
 	"log"
 	"net/http"
+
+	//"net/http"
 	"os"
 )
 
-type StoryFile []struct {
-	name    string
-	content struct {
-		title   string
-		story   []string
-		options string
-		content struct {
-			text string
-			arc  string
-		}
-	}
+var Story map[string]Chapter
+
+type Chapter struct {
+	Title      string   `json:"title"`
+	Paragraphs []string `json:"story"`
+	Options    []Option `json:"options"`
+}
+
+type Option struct {
+	Text string `json:"text"`
+	Arc  string `json:"arc"`
 }
 
 func main() {
@@ -41,23 +43,36 @@ func main() {
 	}
 	fileBytes := buf.Bytes()
 
-	storyFilePopulated, err := parseJson(fileBytes)
+	parseJson(fileBytes)
+	//fmt.Println(storyFilePopulated)
 }
 
-func defaultMux(file StoryFile) *http.ServeMux {
+func parseJson(jsonData []byte) (data map[string]Chapter) {
+	err := json.Unmarshal(jsonData, &Story)
+	if err != nil {
+		panic(err)
+	}
+
+	// Properly parsed json file
+	return Story
+}
+
+//func storyHandler()
+
+func defaultMux(storyParsed map[string]Chapter) *http.ServeMux {
 	mux := http.NewServeMux()
-	for _, story := range file {
-		mux.HandleFunc(story.name, func(w http.ResponseWriter, r *http.Request) {
+	for title := range storyParsed {
+		mux.HandleFunc(title, func(w http.ResponseWriter, r *http.Request) {
 
 		})
 	}
 	return mux
 }
 
-func parseJson(jsonData []byte) (file StoryFile, err error) {
-	err = json.Unmarshal(jsonData, &file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return file, err
-}
+//func parseJson(jsonData []byte) {
+//	err = json.Unmarshal(jsonData, &Story)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Println(Story)
+//}
