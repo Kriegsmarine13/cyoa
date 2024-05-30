@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -43,7 +44,8 @@ func main() {
 	}
 	fileBytes := buf.Bytes()
 
-	parseJson(fileBytes)
+	storyParsed := parseJson(fileBytes)
+	http.ListenAndServe(":9999", defaultMux(storyParsed))
 	//fmt.Println(storyFilePopulated)
 }
 
@@ -62,8 +64,13 @@ func parseJson(jsonData []byte) (data map[string]Chapter) {
 func defaultMux(storyParsed map[string]Chapter) *http.ServeMux {
 	mux := http.NewServeMux()
 	for title := range storyParsed {
-		mux.HandleFunc(title, func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc("/"+title, func(w http.ResponseWriter, r *http.Request) {
+			tmpl, err := template.ParseFiles("./templates/template.html")
+			if err != nil {
+				log.Fatal(err)
+			}
 
+			err = tmpl.Execute(w, storyParsed[title])
 		})
 	}
 	return mux
